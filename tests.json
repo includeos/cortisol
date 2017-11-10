@@ -1,0 +1,11 @@
+{
+	"description": "IncludeOS baseline performance tests",
+	"sheet": "1UqEabvSl4_fwX_4BE4qmkfZMW3AG6cayDFsvBywXveM",
+	"magic": "This sheet is machine generated",
+	"tests": [
+		{
+			"name" : "ping_flood",
+			"targets": ["vubuntu2", "vubuntu2l"]
+		}
+]
+}

@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import json
+import subprocess
+import time
+from pprint import pprint
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import platform
+
+DEBUG = 0
+
+# helper
+def next_available_row(worksheet):
+    str_list = list(filter(None, worksheet.col_values(1)))  # fastest
+    return len(str_list)+1
+
+def load_config():
+	with open('tests.json') as data_file:
+		c = json.load(data_file)
+	return c
+
+def get_sheet():
+	scope = ['https://spreadsheets.google.com/feeds']
+	credentials = ServiceAccountCredentials.from_json_keyfile_name('cortisol-service-acct.json', scope)
+	gc = gspread.authorize(credentials)
+	wks = gc.open_by_key(config['sheet']).sheet1
+	return wks
+
+
+
+config = load_config()
+wks = get_sheet()
+
+print(wks.acell('A1').value)
+if (wks.acell('A1').value == config['magic']):
+	if DEBUG:
+		print("Sheet checks out OK")
+else:
+	print("Can't touch this! Make sure A1 says '"+config['magic']+"'")
+	exit(1)
+
+next_row = next_available_row(wks)
+
+
+for test in config['tests']:
+	name = test['name']
+	if DEBUG:
+		print("Running test" + test['name'])
+	for target in test['targets']:
+		if DEBUG:
+			print("running ", name, "against", target)
+		starttime = time.time()
+		completed = subprocess.run(['./tests/'+name, target],stdout=subprocess.PIPE)
+		# Primary output of the plugin is in the first line
+		primary,comment = completed.stdout.decode('utf-8').split("\n")[0:2]
+		elapsed = time.time() - starttime
+		if DEBUG:
+			print("elapsed:", elapsed, "seconds")
+		wks.insert_row([platform.node(), test['name'], target, elapsed, primary, comment],next_row)
+		next_row = next_row + 1
+		#exit()
+		# wks.update_acell("A{}".format(next_row), time.time() )
