@@ -32,7 +32,6 @@ def get_sheet():
 config = load_config()
 wks = get_sheet()
 
-print(wks.acell('A1').value)
 if (wks.acell('A1').value == config['magic']):
 	if DEBUG:
 		print("Sheet checks out OK")
